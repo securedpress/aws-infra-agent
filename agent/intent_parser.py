@@ -1,11 +1,11 @@
 """
 intent_parser.py
 Parses natural language infrastructure requests into a structured
-InfraIntent object using AWS Bedrock (Claude 4.6 Sonnet).
+InfraIntent object using AWS Bedrock (Claude 3 Sonnet).
 """
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 from agent.bedrock_client import BedrockClient

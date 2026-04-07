@@ -112,7 +112,7 @@ def main():
         logger.error(f"Failed to parse intent: {e}")
         sys.exit(1)
 
-    print(f"\n  Detected:")
+    print("\n  Detected:")
     print(f"    Service type : {intent.service_type or 'not specified'}")
     print(f"    Database     : {intent.database_type or 'none'}")
     print(f"    Environment  : {intent.environment}")

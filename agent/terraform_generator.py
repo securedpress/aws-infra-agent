@@ -5,7 +5,6 @@ Uses Bedrock to produce module calls, then validates syntax.
 """
 
 import logging
-import os
 import subprocess
 import tempfile
 from pathlib import Path

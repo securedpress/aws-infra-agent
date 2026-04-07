@@ -5,7 +5,6 @@ Sets dummy AWS env vars so boto3 doesn't attempt real credential
 resolution during unit tests.
 """
 
-import os
 import pytest
 
 

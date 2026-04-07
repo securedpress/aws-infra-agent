@@ -5,7 +5,7 @@ Bedrock calls are mocked — no AWS credentials required.
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from agent.intent_parser import IntentParser, InfraIntent
 
 

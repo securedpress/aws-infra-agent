@@ -29,14 +29,6 @@ SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN", "")
 ECS_CLUSTER = os.environ.get("ECS_CLUSTER_NAME", "infra-agent-cluster")
 
 
-REMEDIATION_RULES = {
-    "ecs-cpu-high": _scale_out,
-    "ecs-task-count-low": _force_redeploy,
-    "ecs-memory-high": _scale_out,
-    "rds-connections-high": _notify_only,
-}
-
-
 def handler(event: dict, context: Any) -> dict:
     """
     Main Lambda handler. Receives EventBridge events from CloudWatch alarms.
@@ -61,10 +53,16 @@ def handler(event: dict, context: Any) -> dict:
         logger.info(f"Alarm {alarm_name} state is {state} — no action needed")
         return {"status": "skipped", "reason": f"state={state}"}
 
-    # Match alarm name prefix to remediation rule
+    remediation_rules = {
+        "ecs-cpu-high": _scale_out,
+        "ecs-task-count-low": _force_redeploy,
+        "ecs-memory-high": _scale_out,
+        "rds-connections-high": _notify_only,
+    }
+
     action_fn = None
     matched_rule = None
-    for rule_prefix, fn in REMEDIATION_RULES.items():
+    for rule_prefix, fn in remediation_rules.items():
         if alarm_name.startswith(rule_prefix):
             action_fn = fn
             matched_rule = rule_prefix
@@ -74,16 +72,16 @@ def handler(event: dict, context: Any) -> dict:
         logger.warning(f"No remediation rule matched for alarm: {alarm_name}")
         return {"status": "no_match", "alarm": alarm_name}
 
-    # Extract service name from alarm name convention: {rule}-{service}-{env}
     parts = alarm_name.split("-")
-    service_name = parts[len(matched_rule.split("-"))] if len(parts) > len(matched_rule.split("-")) else "unknown"
+    rule_parts = matched_rule.split("-")
+    service_name = parts[len(rule_parts)] if len(parts) > len(rule_parts) else "unknown"
 
     logger.info(f"Executing remediation '{matched_rule}' for service '{service_name}'")
 
     try:
         result = action_fn(alarm_name=alarm_name, service_name=service_name)
         _log_remediation_metric(alarm_name, matched_rule, success=True)
-        _notify(alarm_name, matched_rule, result)
+        _notify_only(alarm_name=alarm_name, service_name=service_name)
         return {"status": "remediated", "action": matched_rule, "result": result}
 
     except Exception as e:
