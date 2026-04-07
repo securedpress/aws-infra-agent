@@ -44,7 +44,7 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/infra-agent-github-actions
+          role-to-assume: ${{ vars.AWS_PROVISIONER_ROLE_ARN }}
           role-session-name: infra-agent-plan-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
@@ -117,7 +117,7 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/infra-agent-github-actions
+          role-to-assume: ${{ vars.AWS_PROVISIONER_ROLE_ARN }}
           role-session-name: infra-agent-apply-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
