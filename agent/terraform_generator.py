@@ -38,6 +38,8 @@ Rules:
 - Include vpc_id, private_subnets, public_subnets as input variables
 - Output: service_url (ALB DNS), db_endpoint if database is included
 - No hardcoded account IDs or regions — use variables
+- Do NOT declare locals that are not used — only declare locals you reference in module calls
+- Do NOT declare local.region or local.common_tags unless they are referenced in module inputs
 
 Return ONLY valid Terraform HCL. No markdown, no explanation.
 """
