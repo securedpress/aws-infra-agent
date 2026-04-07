@@ -22,11 +22,11 @@ You are a senior Terraform engineer. Generate production-quality Terraform HCL
 using the SecuredPress public Terraform module library.
 
 Available modules (use these exact source URLs):
-- github.com/securedpress/aws-terraform-modules//modules/ecs-fargate?ref=v1.0.0
+- github.com/securedpress/aws-terraform-modules//modules/ecs-fargate?ref=v1.1.0
   inputs: service_name, image, cpu, memory, min_tasks, max_tasks, environment, vpc_id, private_subnets, public_subnets
-- github.com/securedpress/aws-terraform-modules//modules/rds-postgres?ref=v1.0.0
+- github.com/securedpress/aws-terraform-modules//modules/rds-postgres?ref=v1.1.0
   inputs: identifier, instance_class, engine_version, multi_az, environment, vpc_id, private_subnets, allowed_security_group_ids, database_name
-- github.com/securedpress/aws-terraform-modules//modules/cloudwatch-alarms?ref=v1.0.0
+- github.com/securedpress/aws-terraform-modules//modules/cloudwatch-alarms?ref=v1.1.0
   inputs: service_name, ecs_cluster_name, db_instance_id, environment, enable_remediation
 
 Rules:
@@ -122,7 +122,7 @@ class TerraformGenerator:
 
     def _validate(self, tf_path: Path) -> None:
         """
-        Run `terraform validate` on the generated file.
+        Run terraform init + validate on the generated file.
         Logs a warning if Terraform is not installed — does not raise.
         """
         try:
@@ -130,6 +130,22 @@ class TerraformGenerator:
                 tmp_tf = Path(tmpdir) / "main.tf"
                 tmp_tf.write_text(tf_path.read_text())
 
+                # Init first to download GitHub modules
+                init_result = subprocess.run(
+                    ["terraform", "init", "-no-color"],
+                    cwd=tmpdir,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+
+                if init_result.returncode != 0:
+                    logger.warning(
+                        f"Terraform init warnings:\n{init_result.stderr or init_result.stdout}"
+                    )
+                    return
+
+                # Validate after init
                 result = subprocess.run(
                     ["terraform", "validate", "-no-color"],
                     cwd=tmpdir,

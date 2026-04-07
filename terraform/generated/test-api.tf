@@ -31,9 +31,8 @@ variable "public_subnets" {
 }
 
 variable "container_image" {
-  description = "Docker image for the ECS Fargate service"
+  description = "Container image URI for the ECS Fargate service"
   type        = string
-  default     = "test-api:latest"
 }
 
 variable "database_name" {
@@ -54,8 +53,8 @@ provider "aws" {
 
 locals {
   environment  = "staging"
-  region       = var.region
   service_name = "test-api"
+  region       = var.region
 
   common_tags = {
     Project     = "infra-agent"
@@ -65,7 +64,7 @@ locals {
 }
 
 module "ecs_fargate" {
-  source = "github.com/securedpress/aws-terraform-modules//modules/ecs-fargate?ref=v1.0.0"
+  source = "github.com/securedpress/aws-terraform-modules//modules/ecs-fargate?ref=v1.1.0"
 
   service_name    = local.service_name
   image           = var.container_image
@@ -80,21 +79,21 @@ module "ecs_fargate" {
 }
 
 module "rds_postgres" {
-  source = "github.com/securedpress/aws-terraform-modules//modules/rds-postgres?ref=v1.0.0"
+  source = "github.com/securedpress/aws-terraform-modules//modules/rds-postgres?ref=v1.1.0"
 
-  identifier                 = "${local.service_name}-${local.environment}"
-  instance_class             = "db.t3.micro"
-  engine_version             = var.postgres_engine_version
-  multi_az                   = false
-  environment                = local.environment
-  vpc_id                     = var.vpc_id
-  private_subnets            = var.private_subnets
+  identifier                = "${local.service_name}-${local.environment}"
+  instance_class            = "db.t3.micro"
+  engine_version            = var.postgres_engine_version
+  multi_az                  = false
+  environment               = local.environment
+  vpc_id                    = var.vpc_id
+  private_subnets           = var.private_subnets
   allowed_security_group_ids = [module.ecs_fargate.service_security_group_id]
-  database_name              = var.database_name
+  database_name             = var.database_name
 }
 
 module "cloudwatch_alarms" {
-  source = "github.com/securedpress/aws-terraform-modules//modules/cloudwatch-alarms?ref=v1.0.0"
+  source = "github.com/securedpress/aws-terraform-modules//modules/cloudwatch-alarms?ref=v1.1.0"
 
   service_name       = local.service_name
   ecs_cluster_name   = module.ecs_fargate.cluster_name
