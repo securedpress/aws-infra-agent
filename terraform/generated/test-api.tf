@@ -71,9 +71,9 @@ module "rds_postgres" {
 module "cloudwatch_alarms" {
   source = "./terraform/modules/cloudwatch-alarms"
 
-  service_name      = local.service_name
-  ecs_cluster_name  = module.ecs_fargate.cluster_name
-  environment       = local.environment
+  service_name     = local.service_name
+  ecs_cluster_name = module.ecs_fargate.cluster_name
+  environment      = local.environment
 }
 
 output "service_url" {
