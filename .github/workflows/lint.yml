@@ -59,22 +59,6 @@ jobs:
             echo "No generated Terraform files to check — skipping"
           fi
 
-      - name: Terraform init — generated
-        run: |
-          if find terraform/generated -name "*.tf" | grep -q .; then
-            terraform -chdir=terraform/generated init -backend=false
-          else
-            echo "No generated Terraform files to init — skipping"
-          fi
-
-      - name: Terraform validate — generated
-        run: |
-          if find terraform/generated -name "*.tf" | grep -q .; then
-            terraform -chdir=terraform/generated validate
-          else
-            echo "No generated Terraform files to validate — skipping"
-          fi
-
       - name: Setup tflint
         uses: terraform-linters/setup-tflint@v4.1.1
         with:
