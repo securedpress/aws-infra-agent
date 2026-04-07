@@ -81,15 +81,15 @@ module "ecs_fargate" {
 module "rds_postgres" {
   source = "github.com/securedpress/aws-terraform-modules//modules/rds-postgres?ref=v1.1.0"
 
-  identifier                = "${local.service_name}-${local.environment}"
-  instance_class            = "db.t3.micro"
-  engine_version            = var.postgres_engine_version
-  multi_az                  = false
-  environment               = local.environment
-  vpc_id                    = var.vpc_id
-  private_subnets           = var.private_subnets
+  identifier                 = "${local.service_name}-${local.environment}"
+  instance_class             = "db.t3.micro"
+  engine_version             = var.postgres_engine_version
+  multi_az                   = false
+  environment                = local.environment
+  vpc_id                     = var.vpc_id
+  private_subnets            = var.private_subnets
   allowed_security_group_ids = [module.ecs_fargate.service_security_group_id]
-  database_name             = var.database_name
+  database_name              = var.database_name
 }
 
 module "cloudwatch_alarms" {
