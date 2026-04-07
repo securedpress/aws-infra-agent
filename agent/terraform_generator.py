@@ -31,7 +31,7 @@ Available modules (use these exact source URLs):
 
 Rules:
 - Always use the exact GitHub module source URLs above, never local paths
-- Include terraform {} block with required_version = ">= 1.7"
+- Always include a complete terraform {} block with required_version = ">= 1.7" AND required_providers declaring the AWS provider with source = "hashicorp/aws" and version = ">= 5.0"
 - Include provider "aws" block with region variable
 - Use locals for common values (environment, region, tags)
 - Add standard tags: Project = "infra-agent", ManagedBy = "terraform", Environment

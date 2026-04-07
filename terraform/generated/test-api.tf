@@ -1,5 +1,12 @@
 terraform {
   required_version = ">= 1.7"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.0"
+    }
+  }
 }
 
 variable "region" {
@@ -23,15 +30,9 @@ variable "public_subnets" {
   type        = list(string)
 }
 
-variable "image" {
-  description = "Docker image for the ECS service"
+variable "container_image" {
+  description = "Container image URI for the ECS service"
   type        = string
-}
-
-variable "database_name" {
-  description = "Name of the PostgreSQL database"
-  type        = string
-  default     = "testapi"
 }
 
 provider "aws" {
@@ -47,7 +48,7 @@ module "ecs_fargate" {
   source = "github.com/securedpress/aws-terraform-modules//modules/ecs-fargate?ref=v1.1.0"
 
   service_name    = local.service_name
-  image           = var.image
+  image           = var.container_image
   cpu             = 512
   memory          = 1024
   min_tasks       = 1
@@ -69,7 +70,7 @@ module "rds_postgres" {
   vpc_id                     = var.vpc_id
   private_subnets            = var.private_subnets
   allowed_security_group_ids = [module.ecs_fargate.service_security_group_id]
-  database_name              = var.database_name
+  database_name              = "testapi"
 }
 
 module "cloudwatch_alarms" {
