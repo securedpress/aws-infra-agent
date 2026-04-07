@@ -21,7 +21,7 @@ on:
         options: [staging, production]
 
 permissions:
-  id-token: write   # Required for OIDC
+  id-token: write
   contents: read
   pull-requests: write
 
@@ -76,6 +76,10 @@ jobs:
             -out=tfplan \
             -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
             -var="aws_region=${{ env.AWS_REGION }}" \
+            -var="container_image=nginx:latest" \
+            -var="vpc_id=${{ vars.VPC_ID }}" \
+            -var='private_subnets=${{ vars.PRIVATE_SUBNETS }}' \
+            -var='public_subnets=${{ vars.PUBLIC_SUBNETS }}' \
             -detailed-exitcode 2>&1 | tee plan.txt
           echo "exit-code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         working-directory: terraform/generated
@@ -142,7 +146,16 @@ jobs:
           path: terraform/generated/
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: |
+          terraform apply \
+            -auto-approve \
+            -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            -var="container_image=nginx:latest" \
+            -var="vpc_id=${{ vars.VPC_ID }}" \
+            -var='private_subnets=${{ vars.PRIVATE_SUBNETS }}' \
+            -var='public_subnets=${{ vars.PUBLIC_SUBNETS }}' \
+            tfplan
         working-directory: terraform/generated
 
       - name: Output service URL

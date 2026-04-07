@@ -86,7 +86,17 @@ class TerraformGenerator:
 
         output_path = self.output_dir / f"{service_name}.tf"
         output_path.write_text(hcl)
-        logger.info(f"Terraform written to {output_path}")
+        # Auto-format generated Terraform
+        try:
+            subprocess.run(
+                ["terraform", "fmt", str(output_path)],
+                capture_output=True,
+                timeout=30,
+            )
+            logger.info("Terraform fmt applied to generated file")
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            logger.warning("terraform fmt skipped — binary not found or timed out")
+            logger.info(f"Terraform written to {output_path}")
 
         # Validate syntax
         self._validate(output_path)
