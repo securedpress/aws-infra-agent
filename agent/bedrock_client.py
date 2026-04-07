@@ -73,8 +73,11 @@ class BedrockClient:
 
             except ClientError as e:
                 error_code = e.response["Error"]["Code"]
-                if error_code == "ThrottlingException" and attempt < self.max_retries - 1:
-                    wait = 2 ** attempt
+                if (
+                    error_code == "ThrottlingException"
+                    and attempt < self.max_retries - 1
+                ):
+                    wait = 2**attempt
                     logger.warning(f"Throttled by Bedrock, retrying in {wait}s...")
                     time.sleep(wait)
                 else:

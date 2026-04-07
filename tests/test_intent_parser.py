@@ -8,8 +8,8 @@ import pytest
 from unittest.mock import MagicMock
 from agent.intent_parser import IntentParser, InfraIntent
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def mock_bedrock():
@@ -24,6 +24,7 @@ def parser(mock_bedrock):
 
 
 # ── IntentParser tests ────────────────────────────────────────────────────────
+
 
 def test_parse_ecs_fargate_with_rds(parser, mock_bedrock):
     """Should correctly parse an ECS + RDS request."""
@@ -132,6 +133,7 @@ def test_parse_calls_bedrock_with_prompt(parser, mock_bedrock):
 
 
 # ── InfraIntent validation tests ──────────────────────────────────────────────
+
 
 def test_infra_intent_valid():
     """A well-formed InfraIntent should have no validation errors."""

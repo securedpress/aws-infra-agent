@@ -79,6 +79,7 @@ Examples:
 def slugify(text: str) -> str:
     """Convert a prompt into a safe resource name slug."""
     import re
+
     words = text.lower().split()
     # Take first 3 meaningful words, strip non-alphanumeric
     slug = "-".join(re.sub(r"[^a-z0-9]", "", w) for w in words[:3] if len(w) > 2)

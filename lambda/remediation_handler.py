@@ -98,7 +98,9 @@ def _scale_out(alarm_name: str, service_name: str) -> dict:
     )
 
     if not response["services"]:
-        raise ValueError(f"ECS service '{service_name}' not found in cluster '{ECS_CLUSTER}'")
+        raise ValueError(
+            f"ECS service '{service_name}' not found in cluster '{ECS_CLUSTER}'"
+        )
 
     service = response["services"][0]
     current = service["desiredCount"]
