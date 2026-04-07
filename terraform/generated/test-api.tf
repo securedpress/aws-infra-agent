@@ -10,13 +10,13 @@ terraform {
 }
 
 variable "region" {
-  description = "AWS region to deploy resources"
+  description = "AWS region to deploy resources into"
   type        = string
   default     = "us-east-1"
 }
 
 variable "vpc_id" {
-  description = "VPC ID where resources will be deployed"
+  description = "ID of the VPC where resources will be deployed"
   type        = string
 }
 
@@ -31,17 +31,17 @@ variable "public_subnets" {
 }
 
 variable "container_image" {
-  description = "Container image URI for the ECS Fargate service"
+  description = "Docker image URI for the ECS Fargate service"
   type        = string
 }
 
-variable "database_name" {
+variable "db_name" {
   description = "Name of the PostgreSQL database"
   type        = string
   default     = "testapi"
 }
 
-variable "postgres_engine_version" {
+variable "db_engine_version" {
   description = "PostgreSQL engine version"
   type        = string
   default     = "15.4"
@@ -83,13 +83,13 @@ module "rds_postgres" {
 
   identifier                 = "${local.service_name}-${local.environment}"
   instance_class             = "db.t3.micro"
-  engine_version             = var.postgres_engine_version
+  engine_version             = var.db_engine_version
   multi_az                   = false
   environment                = local.environment
   vpc_id                     = var.vpc_id
   private_subnets            = var.private_subnets
   allowed_security_group_ids = [module.ecs_fargate.service_security_group_id]
-  database_name              = var.database_name
+  database_name              = var.db_name
 }
 
 module "cloudwatch_alarms" {
@@ -103,12 +103,12 @@ module "cloudwatch_alarms" {
 }
 
 output "service_url" {
-  description = "ALB DNS name for the ECS Fargate service"
+  description = "DNS name of the Application Load Balancer for the ECS Fargate service"
   value       = module.ecs_fargate.alb_dns_name
 }
 
 output "db_endpoint" {
-  description = "RDS PostgreSQL endpoint"
+  description = "Connection endpoint for the RDS PostgreSQL instance"
   value       = module.rds_postgres.db_endpoint
   sensitive   = true
 }
@@ -119,6 +119,6 @@ output "ecs_cluster_name" {
 }
 
 output "db_instance_id" {
-  description = "RDS instance identifier"
+  description = "Identifier of the RDS PostgreSQL instance"
   value       = module.rds_postgres.db_instance_id
 }
