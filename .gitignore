@@ -1,0 +1,105 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# pytest
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# ruff
+.ruff_cache/
+
+# ── Terraform ─────────────────────────────────────────────────────────────────
+# Local state — never commit
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Terraform plan files — contain sensitive data
+*.tfplan
+tfplan
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform lock file — commit this if using consistent provider versions
+# .terraform.lock.hcl
+
+# Terraform working directories
+**/.terraform/
+**/.terraform.lock.hcl
+
+# Generated Terraform — committed intentionally by the agent
+# Do NOT ignore terraform/generated/ — that's the agent output
+# terraform/generated/
+
+# ── AWS ───────────────────────────────────────────────────────────────────────
+# Never commit credentials
+.aws/
+*.pem
+*.key
+credentials
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.secret
+secrets.json
+secrets.yaml
+secrets.yml
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+
+# ── Build artifacts ───────────────────────────────────────────────────────────
+.build/
+*.zip
+dist/

@@ -1,0 +1,145 @@
+name: Lint & Validate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python-lint:
+    name: Python — Ruff + Black + Pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Ruff — lint
+        run: ruff check agent/ lambda/ tests/
+
+      - name: Black — format check
+        run: black --check agent/ lambda/ tests/
+
+      - name: Pytest — unit tests
+        run: pytest tests/ -v --tb=short
+        env:
+          # Prevent any accidental AWS calls during tests
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+
+  terraform-lint:
+    name: Terraform — fmt + validate + tflint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.5"
+
+      - name: Terraform fmt check — modules
+        run: terraform fmt -check -recursive terraform/modules/
+
+      - name: Terraform init — ecs-fargate module
+        run: terraform init
+        working-directory: terraform/modules/ecs-fargate
+
+      - name: Terraform validate — ecs-fargate module
+        run: terraform validate
+        working-directory: terraform/modules/ecs-fargate
+
+      - name: Terraform init — rds-postgres module
+        run: terraform init
+        working-directory: terraform/modules/rds-postgres
+
+      - name: Terraform validate — rds-postgres module
+        run: terraform validate
+        working-directory: terraform/modules/rds-postgres
+
+      - name: Terraform init — cloudwatch-alarms module
+        run: terraform init
+        working-directory: terraform/modules/cloudwatch-alarms
+
+      - name: Terraform validate — cloudwatch-alarms module
+        run: terraform validate
+        working-directory: terraform/modules/cloudwatch-alarms
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: tflint init
+        run: tflint --init
+        working-directory: terraform/modules
+
+      - name: tflint — ecs-fargate
+        run: tflint --chdir=ecs-fargate
+        working-directory: terraform/modules
+
+      - name: tflint — rds-postgres
+        run: tflint --chdir=rds-postgres
+        working-directory: terraform/modules
+
+      - name: tflint — cloudwatch-alarms
+        run: tflint --chdir=cloudwatch-alarms
+        working-directory: terraform/modules
+
+  security-scan:
+    name: Security — Checkov
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Checkov — scan Terraform modules
+        run: |
+          checkov \
+            --directory terraform/modules \
+            --framework terraform \
+            --output cli \
+            --soft-fail \
+            --skip-check CKV_AWS_79,CKV2_AWS_5
+        # --soft-fail: workflow passes even if checks fail
+        # so CI doesn't block on informational findings.
+        # Remove --soft-fail when modules have main.tf resource blocks.
+        # Skipped checks:
+        #   CKV_AWS_79  — IMDSv2 (not applicable to Fargate)
+        #   CKV2_AWS_5  — SG not attached (false positive on module skeletons)
+
+      - name: Checkov — scan Lambda
+        run: |
+          checkov \
+            --directory lambda \
+            --framework python_lambda \
+            --output cli \
+            --soft-fail
+
+      - name: Checkov — scan GitHub Actions workflows
+        run: |
+          checkov \
+            --directory .github/workflows \
+            --framework github_actions \
+            --output cli \
+            --soft-fail
