@@ -1,7 +1,8 @@
 """
 terraform_generator.py
 Generates Terraform HCL from a structured InfraIntent.
-Uses Bedrock to produce module calls, then validates syntax.
+Uses Bedrock to produce module calls referencing the
+securedpress/aws-terraform-modules public repo.
 """
 
 import logging
@@ -18,21 +19,27 @@ GENERATED_DIR = Path("terraform/generated")
 
 SYSTEM_PROMPT = """
 You are a senior Terraform engineer. Generate production-quality Terraform HCL
-using the module structure in this repository.
+using the SecuredPress public Terraform module library.
 
-Available modules:
-- ./terraform/modules/ecs-fargate  (inputs: service_name, image, cpu, memory, min_tasks, max_tasks, environment)
-- ./terraform/modules/rds-postgres (inputs: identifier, instance_class, engine_version, multi_az, environment)
-- ./terraform/modules/cloudwatch-alarms (inputs: service_name, ecs_cluster_name, environment)
+Available modules (use these exact source URLs):
+- github.com/securedpress/aws-terraform-modules//modules/ecs-fargate?ref=v1.1.0
+  inputs: service_name, image, cpu, memory, min_tasks, max_tasks, environment, vpc_id, private_subnets, public_subnets
+- github.com/securedpress/aws-terraform-modules//modules/rds-postgres?ref=v1.1.0
+  inputs: identifier, instance_class, engine_version, multi_az, environment, vpc_id, private_subnets, allowed_security_group_ids, database_name
+- github.com/securedpress/aws-terraform-modules//modules/cloudwatch-alarms?ref=v1.1.0
+  inputs: service_name, ecs_cluster_name, db_instance_id, environment, enable_remediation
 
 Rules:
-- Always use module sources, never inline resources
-- Include terraform {} block with required_version = ">= 1.7"
+- Always use the exact GitHub module source URLs above, never local paths
+- Always include a complete terraform {} block with required_version = ">= 1.7" AND required_providers declaring the AWS provider with source = "hashicorp/aws" and version = ">= 5.0"
 - Include provider "aws" block with region variable
 - Use locals for common values (environment, region, tags)
 - Add standard tags: Project = "infra-agent", ManagedBy = "terraform", Environment
+- Include vpc_id, private_subnets, public_subnets as input variables
 - Output: service_url (ALB DNS), db_endpoint if database is included
 - No hardcoded account IDs or regions — use variables
+- Do NOT declare locals that are not used — only declare locals you reference in module calls
+- Do NOT declare local.region or local.common_tags unless they are referenced in module inputs
 
 Return ONLY valid Terraform HCL. No markdown, no explanation.
 """
@@ -81,7 +88,17 @@ class TerraformGenerator:
 
         output_path = self.output_dir / f"{service_name}.tf"
         output_path.write_text(hcl)
-        logger.info(f"Terraform written to {output_path}")
+        # Auto-format generated Terraform
+        try:
+            subprocess.run(
+                ["terraform", "fmt", str(output_path)],
+                capture_output=True,
+                timeout=30,
+            )
+            logger.info("Terraform fmt applied to generated file")
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            logger.warning("terraform fmt skipped — binary not found or timed out")
+            logger.info(f"Terraform written to {output_path}")
 
         # Validate syntax
         self._validate(output_path)
@@ -117,7 +134,7 @@ class TerraformGenerator:
 
     def _validate(self, tf_path: Path) -> None:
         """
-        Run `terraform validate` on the generated file.
+        Run terraform init + validate on the generated file.
         Logs a warning if Terraform is not installed — does not raise.
         """
         try:
@@ -125,6 +142,22 @@ class TerraformGenerator:
                 tmp_tf = Path(tmpdir) / "main.tf"
                 tmp_tf.write_text(tf_path.read_text())
 
+                # Init first to download GitHub modules
+                init_result = subprocess.run(
+                    ["terraform", "init", "-no-color"],
+                    cwd=tmpdir,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+
+                if init_result.returncode != 0:
+                    logger.warning(
+                        f"Terraform init warnings:\n{init_result.stderr or init_result.stdout}"
+                    )
+                    return
+
+                # Validate after init
                 result = subprocess.run(
                     ["terraform", "validate", "-no-color"],
                     cwd=tmpdir,
