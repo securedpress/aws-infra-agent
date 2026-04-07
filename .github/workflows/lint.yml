@@ -54,7 +54,7 @@ jobs:
       - name: Terraform fmt check — generated
         run: |
           if find terraform/generated -name "*.tf" | grep -q .; then
-            terraform fmt -check -recursive terraform/generated/
+            terraform -chdir=terraform/generated fmt -check
           else
             echo "No generated Terraform files to check — skipping"
           fi
@@ -62,7 +62,7 @@ jobs:
       - name: Terraform init — generated
         run: |
           if find terraform/generated -name "*.tf" | grep -q .; then
-            terraform init -backend=false terraform/generated/
+            terraform -chdir=terraform/generated init -backend=false
           else
             echo "No generated Terraform files to init — skipping"
           fi
@@ -70,7 +70,7 @@ jobs:
       - name: Terraform validate — generated
         run: |
           if find terraform/generated -name "*.tf" | grep -q .; then
-            terraform validate terraform/generated/
+            terraform -chdir=terraform/generated validate
           else
             echo "No generated Terraform files to validate — skipping"
           fi
